@@ -1,233 +1,246 @@
 <template>
-<!-- HEADER -->
-    <div class="nav-side-menu col-lg-2">
-
-        <h1 class="brand">
-            <a class="github" href="https://github.com/ardupilot/uavlogviewer">
-            <img :src="require('../assets/GitHub-Mark-64px.png').default"/>
-            </a>
-            <a href="/"><b>UAV</b> Log Viewer<i class="fas fa-plane"></i></a><a class="github" href="https://ardupilot.org/copter/docs/common-uavlogviewer.html"><img :src="require('../assets/wiki.svg').default"/></a></h1>
-        <!-- TABHOLDER -->
-        <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
-        <b-collapse class="menu-content collapse out" id="menucontent" visible>
-            <span v-if="state.file" class="filename">Current file: {{state.file}}</span>
-            <div class="tabholder">
-                <!-- Home -->
-                <a :class="selected === 'home' ? 'selected' : ''" @click="selected='home'" v-if="!state.processDone">
-                <i class="fas fa-home"></i>Home</a>
-                <!-- Plot -->
-                <a :class="selected === 'plot' ? 'selected' : ''" @click="selected='plot'"
-                   v-if="state.processDone"> <i class="fas fa-chart-line"></i>Plot</a>
-                <!-- more -->
-                <a :class="selected ==='other' ? 'selected' : ''" @click="selected='other'" v-if="state.processDone">
-                    <i class="fas fa-ellipsis-v"></i>
+    <!-- HEADER -->
+        <div class="nav-side-menu col-lg-2">
+            <h1 class="brand">
+                <a class="github" href="https://github.com/ardupilot/uavlogviewer">
+                <img :src="require('../assets/GitHub-Mark-64px.png').default"/>
                 </a>
-            </div>
-        </b-collapse>
-        <!-- TOGGLE MENU -->
-        <div class="menu-list">
+                <a href="/"><b>UAV</b> Log Viewer<i class="fas fa-plane"></i></a><a class="github" href="https://ardupilot.org/copter/docs/common-uavlogviewer.html"><img :src="require('../assets/wiki.svg').default"/></a></h1>
+            <!-- TABHOLDER -->
+            <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
             <b-collapse class="menu-content collapse out" id="menucontent" visible>
-
-                <div :style="{display: selected==='plot' ? '' : 'none' }">
-                    <plotSetup/>
-                    <message-menu/>
-                </div>
-                <div v-if="selected==='home'">
-                    <Dropzone/>
-                    <span class="buildinfo">Commit {{state.commit}}</span>
-                    <span class="buildinfo">Built {{state.buildDate}}</span>
-                </div>
-                <div v-if="selected==='other'">
-                    <!-- PARAM/MESSAGES/RADIO -->
-                    <hr>
-                    <a class="centered-section"> Show / hide </a>
-                    <div v-if="state.processDone" class="show-hide">
-                        <label v-if="state.params">
-                          <i class="fa fa-cogs circle"></i>
-                          <input type="checkbox" v-model="state.showParams">
-                          <a class="check-font"> Parameters </a>
-                        </label>
-                        <label>
-                          <i class="fa fa-gamepad circle"></i>
-                          <input type="checkbox" v-model="state.showRadio">
-                          <a class="check-font"> Radio Sticks </a>
-                        </label>
-                        <label>
-                          <i class="fa fa-compass circle"></i>
-                          <input type="checkbox" v-model="state.showMagfit">
-                          <a class="check-font"> Mag Fit Tool </a>
-                        </label>
-                        <label>
-                          <i class="fa fa-compass circle"></i>
-                          <input type="checkbox" v-model="state.showEkfHelper">
-                          <a class="check-font"> EKF helper </a>
-                        </label>
-                        <label v-if="state.textMessages">
-                          <i class="fa fa-comment circle"></i>
-                          <input type="checkbox" v-model="state.showMessages">
-                          <a class="check-font"> Messages </a>
-                        </label>
-                        <label>
-                          <i class="fa fa-plane-departure circle"></i>
-                          <input type="checkbox" v-model="state.showAttitude">
-                          <a class="check-font"> Attitude </a>
-                        </label>
-                        <label v-if="!recording" v-on:click="startCapture">
-                            <i class="fa fa-play circle"></i>
-                            <a class="check-font"> Record </a>
-                        </label>
-                        <label v-if="recording" v-on:click="stopCapture">
-                            <i class="fa fa-stop circle"></i>
-                            <a class="check-font"> End Rec </a>
-                        </label>
-                        <label  v-if="this.chunks" v-on:click="download">
-                            <i class="fa fa-download circle"></i>
-                            <a class="check-font download-text" v-bind:href="downloadURL"
-                               v-bind:download="fileName" ref="downloadFile"> Download </a>
-                        </label>
-                        <label v-if="state.logType==='tlog'" v-on:click="downloadTrimmed">
-                            <i
-                            class="fa fa-download circle"
-                            title="Download a log with starting and end time matching the current views">
-                            </i>
-                            <a class="check-font"> Trimmed log </a>
-                        </label>
-                        <label>
-                            <i
-                            class="fa fa-microchip circle"
-                            title="Show a widget with the detected sensors">
-                            </i>
-                            <input type="checkbox" v-model="state.showDeviceIDs">
-                            <a class="check-font">  Sensors </a>
-                        </label>
-                    </div>
-                    <div v-if="state.files" class="show-hide">
-                        <ul class="files-list">
-                        <span class="files-header">Files:</span>
-                        <li
-                            v-for="filename in Object.keys(state.files)"
-                            :key="filename"
-                            href="#"
-                            @click="downloadFile(filename)"
-                        >
-                                <i class="fa fa-file-download"></i>
-                            {{ filename }}
-                        </li>
-                        </ul>
-                    </div>
-                    <div>
-                        <label><i class="fas fa-gamepad"></i> Radio Mode</label>
-                        <select class="cesium-button" v-model="state.radioMode">
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                        </select>
-                    </div>
+                <span v-if="state.file" class="filename">Current file: {{state.file}}</span>
+                <div class="tabholder">
+                    <!-- Home -->
+                    <a :class="selected === 'home' ? 'selected' : ''" @click="selected='home'" v-if="!state.processDone">
+                    <i class="fas fa-home"></i>Home</a>
+                    <!-- Plot -->
+                    <a :class="selected === 'plot' ? 'selected' : ''" @click="selected='plot'"
+                       v-if="state.processDone"> <i class="fas fa-chart-line"></i>Plot</a>
+                    <!-- Chat -->
+                    <a :class="selected === 'chat' ? 'selected' : ''"@click="selected = 'chat'"
+                      v-if="state.processDone"><i class="fas fa-comment-dots"></i> Chat</a>
+                    <!-- more -->
+                    <a :class="selected ==='other' ? 'selected' : ''" @click="selected='other'" v-if="state.processDone">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </a>
                 </div>
             </b-collapse>
+            <!-- TOGGLE MENU -->
+            <div class="menu-list">
+                <b-collapse class="menu-content collapse out" id="menucontent" visible>
+    
+                    <div :style="{display: selected==='plot' ? '' : 'none' }">
+                        <plotSetup/>
+                        <message-menu/>   
+                    </div>
+                    <!-- Always keep the Chat component alive -->
+                    <keep-alive>
+                        <Chat v-if="selected === 'chat'"/>
+                    </keep-alive>
+                    <div v-if="selected==='home'">
+                        <Dropzone/>
+                        <span class="buildinfo">Commit {{state.commit}}</span>
+                        <span class="buildinfo">Built {{state.buildDate}}</span>
+                    </div>
+                    <div v-if="selected==='other'">
+                        <!-- PARAM/MESSAGES/RADIO -->
+                        <hr>
+                        <a class="centered-section"> Show / hide </a>
+                        <div v-if="state.processDone" class="show-hide">
+                            <label v-if="state.params">
+                              <i class="fa fa-cogs circle"></i>
+                              <input type="checkbox" v-model="state.showParams">
+                              <a class="check-font"> Parameters </a>
+                            </label>
+                            <label>
+                              <i class="fa fa-gamepad circle"></i>
+                              <input type="checkbox" v-model="state.showRadio">
+                              <a class="check-font"> Radio Sticks </a>
+                            </label>
+                            <label>
+                              <i class="fa fa-compass circle"></i>
+                              <input type="checkbox" v-model="state.showMagfit">
+                              <a class="check-font"> Mag Fit Tool </a>
+                            </label>
+                            <label>
+                              <i class="fa fa-compass circle"></i>
+                              <input type="checkbox" v-model="state.showEkfHelper">
+                              <a class="check-font"> EKF helper </a>
+                            </label>
+                            <label v-if="state.textMessages">
+                              <i class="fa fa-comment circle"></i>
+                              <input type="checkbox" v-model="state.showMessages">
+                              <a class="check-font"> Messages </a>
+                            </label>
+                            <label>
+                              <i class="fa fa-plane-departure circle"></i>
+                              <input type="checkbox" v-model="state.showAttitude">
+                              <a class="check-font"> Attitude </a>
+                            </label>
+                            <label v-if="!recording" v-on:click="startCapture">
+                                <i class="fa fa-play circle"></i>
+                                <a class="check-font"> Record </a>
+                            </label>
+                            <label v-if="recording" v-on:click="stopCapture">
+                                <i class="fa fa-stop circle"></i>
+                                <a class="check-font"> End Rec </a>
+                            </label>
+                            <label  v-if="this.chunks" v-on:click="download">
+                                <i class="fa fa-download circle"></i>
+                                <a class="check-font download-text" v-bind:href="downloadURL"
+                                   v-bind:download="fileName" ref="downloadFile"> Download </a>
+                            </label>
+                            <label v-if="state.logType==='tlog'" v-on:click="downloadTrimmed">
+                                <i
+                                class="fa fa-download circle"
+                                title="Download a log with starting and end time matching the current views">
+                                </i>
+                                <a class="check-font"> Trimmed log </a>
+                            </label>
+                            <label>
+                                <i
+                                class="fa fa-microchip circle"
+                                title="Show a widget with the detected sensors">
+                                </i>
+                                <input type="checkbox" v-model="state.showDeviceIDs">
+                                <a class="check-font">  Sensors </a>
+                            </label>
+                        </div>
+                        <div v-if="state.files" class="show-hide">
+                            <ul class="files-list">
+                            <span class="files-header">Files:</span>
+                            <li
+                                v-for="filename in Object.keys(state.files)"
+                                :key="filename"
+                                href="#"
+                                @click="downloadFile(filename)"
+                            >
+                                    <i class="fa fa-file-download"></i>
+                                {{ filename }}
+                            </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <label><i class="fas fa-gamepad"></i> Radio Mode</label>
+                            <select class="cesium-button" v-model="state.radioMode">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                            </select>
+                        </div>
+                    </div>
+                </b-collapse>
+            </div>
         </div>
-    </div>
-</template>
-<script>
-/* eslint-disable */
-import Dropzone from './SideBarFileManager.vue'
-import MessageMenu from './SideBarMessageMenu.vue'
-import {store} from './Globals.js'
-import PlotSetup from './PlotSetup.vue'
-
-export default {
-    name: 'sidebar',
-    data () {
-        return {
-            selected: 'home',
-            state: store,
-            chunks: false,
-            blob: null,
-            recording: false,
-            recorder: null,
-            stream: null,
-            downloadURL: '',
-            fileName: 'video.mp4'
-        }
-    },
-    methods: {
-        setSelected (selected) {
-            this.selected = selected
-        },
-
-        startCapture (displayMediaOptions) {
-            navigator.mediaDevices.getDisplayMedia({video: { mediaSource: 'screen' }})
-                .then((stream) => {
-                    this.record(stream)
-                })
-                .catch(err => { console.error('Error:' + err); return null })
-        },
-
-        stopCapture () {
-            this.recorder.stop()
-            this.stream.getTracks().forEach(track => track.stop())
-
-        },
-
-        record (stream) {
-            const recorder = new MediaRecorder(stream)
-            const chunks = []
-            recorder.ondataavailable = e => chunks.push(e.data)
-
-            this.stream = stream
-            this.recorder = recorder
-            this.recorder.start()
-
-            this.recording = true
-
-            recorder.onstop = e => {
-                const completeBlob = new Blob(chunks, { type: chunks[0].type })
-                this.chunks = true
-                this.blob = completeBlob
-                this.recording = false
+    </template>
+    <script>
+    /* eslint-disable */
+    import Dropzone from './SideBarFileManager.vue'
+    import MessageMenu from './SideBarMessageMenu.vue'
+    import {store} from './Globals.js'
+    import PlotSetup from './PlotSetup.vue'
+    import Chat from './Chat.vue'
+    
+    export default {
+        name: 'sidebar',
+        data () {
+            return {
+                selected: 'home',
+                showChat: false,
+                state: store,
+                chunks: false,
+                blob: null,
+                recording: false,
+                recorder: null,
+                stream: null,
+                downloadURL: '',
+                fileName: 'video.mp4'
             }
         },
-
-        download () {
-            this.$refs.downloadFile.click()
+        methods: {
+            setSelected (selected) {
+                this.selected = selected
+            },
+            
+            toggleChat () {
+                this.showChat = !this.showChat
+                this.$eventHub.$emit('toggle-chat', this.showChat)
+            },
+    
+            startCapture (displayMediaOptions) {
+                navigator.mediaDevices.getDisplayMedia({video: { mediaSource: 'screen' }})
+                    .then((stream) => {
+                        this.record(stream)
+                    })
+                    .catch(err => { console.error('Error:' + err); return null })
+            },
+    
+            stopCapture () {
+                this.recorder.stop()
+                this.stream.getTracks().forEach(track => track.stop())
+    
+            },
+    
+            record (stream) {
+                const recorder = new MediaRecorder(stream)
+                const chunks = []
+                recorder.ondataavailable = e => chunks.push(e.data)
+    
+                this.stream = stream
+                this.recorder = recorder
+                this.recorder.start()
+    
+                this.recording = true
+    
+                recorder.onstop = e => {
+                    const completeBlob = new Blob(chunks, { type: chunks[0].type })
+                    this.chunks = true
+                    this.blob = completeBlob
+                    this.recording = false
+                }
+            },
+    
+            download () {
+                this.$refs.downloadFile.click()
+            },
+            downloadTrimmed () {
+                this.$eventHub.$emit('trimFile')
+            },
+    
+            createDownloadURL (data, fileName) {
+                const a = document.createElement('a')
+                a.href = data
+                a.download = fileName
+                document.body.appendChild(a)
+                a.style.display = 'none'
+                a.click()
+                a.remove()
+            },
+    
+            downloadBlob (data, fileName, mimeType) {
+                const blob = new Blob([data], {
+                    type: mimeType
+                })
+                const url = window.URL.createObjectURL(blob)
+                this.createDownloadURL(url, fileName)
+                setTimeout(() => window.URL.revokeObjectURL(url), 1000)
+            },
+    
+            downloadFile (filename) {
+                this.downloadBlob(this.state.files[filename], filename, 'application/octet-stream')
+            }
         },
-        downloadTrimmed () {
-            this.$eventHub.$emit('trimFile')
+        created () {
+            this.$eventHub.$on('set-selected', this.setSelected)
         },
-
-        createDownloadURL (data, fileName) {
-            const a = document.createElement('a')
-            a.href = data
-            a.download = fileName
-            document.body.appendChild(a)
-            a.style.display = 'none'
-            a.click()
-            a.remove()
+        watch: {
+            blob () {
+                this.downloadURL = URL.createObjectURL(this.blob)
+            }
         },
-
-        downloadBlob (data, fileName, mimeType) {
-            const blob = new Blob([data], {
-                type: mimeType
-            })
-            const url = window.URL.createObjectURL(blob)
-            this.createDownloadURL(url, fileName)
-            setTimeout(() => window.URL.revokeObjectURL(url), 1000)
-        },
-
-        downloadFile (filename) {
-            this.downloadBlob(this.state.files[filename], filename, 'application/octet-stream')
-        }
-    },
-    created () {
-        this.$eventHub.$on('set-selected', this.setSelected)
-    },
-    watch: {
-        blob () {
-            this.downloadURL = URL.createObjectURL(this.blob)
-        }
-    },
-    components: {PlotSetup, MessageMenu, Dropzone}
-}
-</script>
+        components: {PlotSetup, MessageMenu, Dropzone, Chat}
+    }
+    </script>
 <style scoped>
 
 @media (min-width: 575px) and (max-width: 992px) {

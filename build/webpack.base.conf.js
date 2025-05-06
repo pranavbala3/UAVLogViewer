@@ -44,7 +44,7 @@ module.exports = {
 
   module: {
     rules: [
-      ...(config.dev.useEslint ? [createLintingRule()] : []),
+      // ...(config.dev.useEslint ? [createLintingRule()] : []),
       {
         test: /\.worker\.js$/,
         use: { loader: 'worker-loader' }

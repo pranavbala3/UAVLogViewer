@@ -196,6 +196,37 @@ export default {
 
             this.state.processStatus = 'Processed!'
             this.state.processDone = true
+
+            const serializedParams = {
+                values: this.state.params?.values,
+                changeArray: this.state.params?.changeArray
+            }
+
+            const sendToChatbotBackend = async () => {
+                const parsedData = {
+                    flightModeChanges: this.state.flightModeChanges,
+                    events: this.state.events,
+                    mission: this.state.mission,
+                    attitude: this.state.timeAttitude,
+                    trajectories: this.state.currentTrajectory,
+                    textMessages: this.state.textMessages,
+                    params: serializedParams,
+                    vehicle: this.state.vehicle
+                }
+
+                try {
+                    const response = await fetch('http://localhost:8000/upload_log', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(parsedData)
+                    })
+                    const result = await response.json()
+                    console.log('Sent to chatbot backend:', result)
+                } catch (error) {
+                    console.error('Error sending to chatbot backend:', error)
+                }
+            }
+            sendToChatbotBackend()
             // Change to plot view after 2 seconds so the Processed status is readable
             setTimeout(() => { this.$eventHub.$emit('set-selected', 'plot') }, 2000)
 
