@@ -75,5 +75,5 @@ npm run dev
 Open localhost:8080 to view app.
 
 ## Demo
-https://github.com/user-attachments/assets/9b6b7e88-eb62-4c43-9744-8db8a4e67f87
+https://github.com/user-attachments/assets/d6b01a57-26d4-43a8-ba59-3fed40a6042f
 
